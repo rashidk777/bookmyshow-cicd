@@ -1,0 +1,86 @@
+---
+# deploy.yml
+# Algorithm:
+#   1. Ensure Docker is installed and running on the target EC2 instance
+#   2. Authenticate to the registry (if credentials are supplied)
+#   3. Pull the newly built image (image_name:image_tag)
+#   4. Stop and remove any previous container with the same name
+#   5. Start a new container from the freshly pulled image
+#   6. Prune dangling images so the host doesn't fill up over time
+
+- name: Deploy BookMyShow-Lite container
+  hosts: deploy
+  become: true
+
+  vars:
+    image_name: "yourdockerhubuser/bookmyshow-lite"
+    image_tag: "latest"
+    container_name: "bookmyshow-lite"
+    host_port: 3000
+    container_port: 3000
+
+  tasks:
+    - name: Install prerequisite packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Install Python Docker SDK (needed by the community.docker modules)
+      pip:
+        name: docker
+        executable: pip3
+
+    - name: Pull the latest application image
+      community.docker.docker_image:
+        name: "{{ image_name }}:{{ image_tag }}"
+        source: pull
+        force_source: true
+
+    - name: Remove any existing container of the same name
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: absent
+
+    - name: Run the new container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ image_name }}:{{ image_tag }}"
+        state: started
+        restart_policy: unless-stopped
+        published_ports:
+          - "{{ host_port }}:{{ container_port }}"
+
+    - name: Prune dangling images to reclaim disk space
+      community.docker.docker_prune:
+        images: true

@@ -1,0 +1,18 @@
+{
+  "name": "bookmyshow-lite",
+  "version": "1.0.0",
+  "description": "Sample ticket-booking web app used as the build artifact for the CI/CD pipeline",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "mocha tests/**/*.test.js --timeout 10000"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "chai": "^4.4.1",
+    "chai-http": "^4.4.0",
+    "mocha": "^10.4.0"
+  }
+}

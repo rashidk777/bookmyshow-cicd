@@ -1,0 +1,24 @@
+---
+# teardown.yml
+# Removes the running container stack, e.g. for a scheduled clean-up
+# job or after a demo/test cycle. Run with:
+#   ansible-playbook -i inventory.ini teardown.yml -e container_name=bookmyshow-lite
+
+- name: Tear down BookMyShow-Lite container stack
+  hosts: deploy
+  become: true
+
+  vars:
+    container_name: "bookmyshow-lite"
+
+  tasks:
+    - name: Stop and remove the application container
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        state: absent
+
+    - name: Remove dangling images and stopped containers
+      community.docker.docker_prune:
+        containers: true
+        images: true
+        networks: true
