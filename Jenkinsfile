@@ -43,16 +43,19 @@ pipeline {
         }
 
         stage('Install & Unit Test') {
-            agent {
-                docker { image 'node:18-alpine' }
-            }
-            steps {
-                dir('app') {
-                    sh 'npm install'
-                    sh 'npm test'
-                }
-            }
+    agent {
+        docker {
+            image 'node:18-alpine'
+            label 'docker-agent'
         }
+    }
+    steps {
+        dir('app') {
+            sh 'npm install'
+            sh 'npm test'
+        }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
