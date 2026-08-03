@@ -11,8 +11,7 @@
 //   7. On completion (success or failure) tear down any leftover build containers
 
 pipeline {
-
-    agent any
+    agent { label 'docker-agent' }
 
     options {
         timestamps()
