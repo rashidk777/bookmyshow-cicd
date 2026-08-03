@@ -13,7 +13,7 @@
   become: true
 
   vars:
-    image_name: "yourdockerhubuser/bookmyshow-lite"
+    image_name: "rashidk777/bookmyshow-lite"
     image_tag: "latest"
     container_name: "bookmyshow-lite"
     host_port: 3000

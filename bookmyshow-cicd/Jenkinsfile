@@ -21,7 +21,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME       = "yourdockerhubuser/bookmyshow-lite"
+        IMAGE_NAME       = "rashidk777/bookmyshow-lite"
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
         REGISTRY_CREDS   = "dockerhub-creds"          // Jenkins credential ID
         ANSIBLE_HOSTS    = "ansible/inventory.ini"
