@@ -11,6 +11,7 @@
 //   7. On completion (success or failure) tear down any leftover build containers
 
 pipeline {
+
     agent { label 'docker-agent' }
 
     options {
@@ -43,19 +44,19 @@ pipeline {
         }
 
         stage('Install & Unit Test') {
-    agent {
-        docker {
-            image 'node:18-alpine'
-            label 'docker-agent'
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    label 'docker-agent'
+                }
+            }
+            steps {
+                dir('app') {
+                    sh 'npm install'
+                    sh 'npm test'
+                }
+            }
         }
-    }
-    steps {
-        dir('app') {
-            sh 'npm install'
-            sh 'npm test'
-        }
-    }
-}
 
         stage('Build Docker Image') {
             steps {
