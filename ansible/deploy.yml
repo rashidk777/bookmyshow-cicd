@@ -56,15 +56,10 @@
         state: started
         enabled: true
 
-    - name: Install pip3 (required for the Python Docker SDK)
-      apt:
-        name: python3-pip
-        state: present
-
     - name: Install Python Docker SDK (needed by the community.docker modules)
-      pip:
-        name: docker
-        executable: pip3
+      apt:
+        name: python3-docker
+        state: present
 
     - name: Pull the latest application image
       community.docker.docker_image:
