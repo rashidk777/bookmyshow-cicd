@@ -2,11 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BookMyShow-Lite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BookMyShow-Lite — Book your show</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>BookMyShow-Lite</h1>
-  <p>Sample ticket booking service used as the CI/CD pipeline artifact.</p>
-  <p>Try <code>GET /api/shows</code> or <code>GET /health</code>.</p>
+
+  <header class="marquee-header">
+    <div class="marquee-header__row">
+      <div class="brand">Book<span>MyShow</span>-Lite</div>
+      <div class="marquee-ticker" id="ticker">Loading now-showing lineup…</div>
+    </div>
+  </header>
+
+  <main>
+    <p class="section-eyebrow">Now showing</p>
+    <h1 class="section-title">Pick a film, pick a seat</h1>
+    <div class="movie-grid" id="movie-grid"></div>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet" id="sheet">
+      <button class="sheet__close" id="sheet-close">&larr; Back to listings</button>
+      <h2 class="sheet__title" id="sheet-title"></h2>
+      <p class="sheet__meta" id="sheet-meta"></p>
+
+      <div id="showtime-section">
+        <div class="showtime-row" id="showtime-row"></div>
+      </div>
+
+      <div id="seat-section" style="display:none;">
+        <div class="screen-wrap">
+          <svg class="screen-arc" viewBox="0 0 300 30" preserveAspectRatio="none">
+            <path d="M0,28 Q150,-6 300,28" fill="none" stroke="#f2a93b" stroke-width="3" stroke-linecap="round" opacity="0.85" />
+          </svg>
+        </div>
+        <p class="screen-label">SCREEN THIS WAY</p>
+
+        <div class="seat-map" id="seat-map"></div>
+
+        <div class="seat-legend">
+          <span class="seat-legend__item"><span class="seat-legend__swatch" style="background:#3ea88a"></span>Available</span>
+          <span class="seat-legend__item"><span class="seat-legend__swatch" style="background:#f2a93b"></span>Premium</span>
+          <span class="seat-legend__item"><span class="seat-legend__swatch" style="background:#e85a4f"></span>Selected</span>
+          <span class="seat-legend__item"><span class="seat-legend__swatch" style="background:#3a3648"></span>Taken</span>
+        </div>
+
+        <p class="status-line" id="status-line"></p>
+
+        <div class="ticket-stub">
+          <div class="ticket-stub__row">
+            <div>
+              <div class="ticket-stub__seats" id="stub-seats">No seats selected</div>
+              <div class="ticket-stub__total"><span>Total</span><span class="ticket-stub__amount">&#8377;<span id="stub-total">0</span></span></div>
+            </div>
+            <button class="btn-confirm" id="confirm-btn" disabled>Confirm booking</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="confirm-section" style="display:none;">
+        <div class="confirm-panel">
+          <p class="confirm-panel__id" id="confirm-id"></p>
+          <h2 class="confirm-panel__headline">You're in. Enjoy the show.</h2>
+          <p class="sheet__meta" id="confirm-details"></p>
+          <button class="confirm-panel__btn" id="confirm-done">Book another show</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
