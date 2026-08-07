@@ -20,6 +20,14 @@ function freshSeatMap() {
   return []; // list of booked seat ids, e.g. ["A1", "C7"]
 }
 
+const theaters = [
+  { id: 't1', name: 'PVR Forum Mall', area: 'Kochi' },
+  { id: 't2', name: 'INOX Oberon Mall', area: 'Kochi' },
+  { id: 't3', name: 'Cinepolis Lulu Mall', area: 'Edappally' }
+];
+
+const theaterById = Object.fromEntries(theaters.map((t) => [t.id, t]));
+
 const movies = [
   {
     id: '1',
@@ -28,11 +36,12 @@ const movies = [
     language: 'Hindi',
     duration: 142,
     certificate: 'U/A',
+    rating: 4.2,
     poster: { from: '#f2a93b', to: '#6b2b4c' },
     showtimes: [
-      { id: '1-1', time: '10:30 AM', basePrice: 180 },
-      { id: '1-2', time: '2:00 PM', basePrice: 220 },
-      { id: '1-3', time: '9:15 PM', basePrice: 260 }
+      { id: '1-1', theaterId: 't1', time: '10:30 AM', basePrice: 180 },
+      { id: '1-2', theaterId: 't2', time: '2:00 PM', basePrice: 220 },
+      { id: '1-3', theaterId: 't3', time: '9:15 PM', basePrice: 260 }
     ]
   },
   {
@@ -42,10 +51,11 @@ const movies = [
     language: 'English',
     duration: 128,
     certificate: 'U/A',
+    rating: 4.5,
     poster: { from: '#3ea88a', to: '#12101c' },
     showtimes: [
-      { id: '2-1', time: '11:00 AM', basePrice: 190 },
-      { id: '2-2', time: '6:45 PM', basePrice: 240 }
+      { id: '2-1', theaterId: 't1', time: '11:00 AM', basePrice: 190 },
+      { id: '2-2', theaterId: 't3', time: '6:45 PM', basePrice: 240 }
     ]
   },
   {
@@ -55,10 +65,11 @@ const movies = [
     language: 'Hindi',
     duration: 151,
     certificate: 'A',
+    rating: 4.1,
     poster: { from: '#6b2b4c', to: '#1c1730' },
     showtimes: [
-      { id: '3-1', time: '1:15 PM', basePrice: 200 },
-      { id: '3-2', time: '10:00 PM', basePrice: 250 }
+      { id: '3-1', theaterId: 't2', time: '1:15 PM', basePrice: 200 },
+      { id: '3-2', theaterId: 't1', time: '10:00 PM', basePrice: 250 }
     ]
   },
   {
@@ -68,11 +79,12 @@ const movies = [
     language: 'Hindi',
     duration: 137,
     certificate: 'U',
+    rating: 4.6,
     poster: { from: '#f2a93b', to: '#3ea88a' },
     showtimes: [
-      { id: '4-1', time: '9:45 AM', basePrice: 170 },
-      { id: '4-2', time: '4:30 PM', basePrice: 210 },
-      { id: '4-3', time: '8:00 PM', basePrice: 240 }
+      { id: '4-1', theaterId: 't1', time: '9:45 AM', basePrice: 170 },
+      { id: '4-2', theaterId: 't2', time: '4:30 PM', basePrice: 210 },
+      { id: '4-3', theaterId: 't3', time: '8:00 PM', basePrice: 240 }
     ]
   },
   {
@@ -82,10 +94,11 @@ const movies = [
     language: 'Hindi',
     duration: 119,
     certificate: 'U',
+    rating: 3.9,
     poster: { from: '#3ea88a', to: '#f2a93b' },
     showtimes: [
-      { id: '5-1', time: '12:00 PM', basePrice: 160 },
-      { id: '5-2', time: '5:15 PM', basePrice: 200 }
+      { id: '5-1', theaterId: 't2', time: '12:00 PM', basePrice: 160 },
+      { id: '5-2', theaterId: 't3', time: '5:15 PM', basePrice: 200 }
     ]
   },
   {
@@ -95,21 +108,25 @@ const movies = [
     language: 'Malayalam',
     duration: 133,
     certificate: 'U/A',
+    rating: 4.4,
     poster: { from: '#12101c', to: '#3ea88a' },
     showtimes: [
-      { id: '6-1', time: '11:30 AM', basePrice: 180 },
-      { id: '6-2', time: '7:30 PM', basePrice: 230 }
+      { id: '6-1', theaterId: 't3', time: '11:30 AM', basePrice: 180 },
+      { id: '6-2', theaterId: 't1', time: '7:30 PM', basePrice: 230 }
     ]
   }
 ];
 
-// Flat lookup: showtimeId -> { movieId, time, basePrice, booked: [] }
+// Flat lookup: showtimeId -> { movieId, movieTitle, theaterId, theaterName, time, basePrice, booked: [] }
 const showtimeIndex = {};
 movies.forEach((movie) => {
   movie.showtimes.forEach((st) => {
     showtimeIndex[st.id] = {
       movieId: movie.id,
       movieTitle: movie.title,
+      theaterId: st.theaterId,
+      theaterName: theaterById[st.theaterId].name,
+      theaterArea: theaterById[st.theaterId].area,
       time: st.time,
       basePrice: st.basePrice,
       booked: freshSeatMap()
@@ -134,6 +151,10 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP' });
 });
 
+app.get('/api/theaters', (req, res) => {
+  res.status(200).json(theaters);
+});
+
 app.get('/api/movies', (req, res) => {
   const list = movies.map((m) => {
     const seatsLeft = m.showtimes.reduce((sum, st) => {
@@ -147,6 +168,7 @@ app.get('/api/movies', (req, res) => {
       language: m.language,
       duration: m.duration,
       certificate: m.certificate,
+      rating: m.rating,
       poster: m.poster,
       seatsLeft
     };
@@ -165,7 +187,10 @@ app.get('/api/movies/:id', (req, res) => {
       id: st.id,
       time: st.time,
       basePrice: st.basePrice,
-      seatsLeft: totalSeats - entry.booked.length
+      seatsLeft: totalSeats - entry.booked.length,
+      theaterId: entry.theaterId,
+      theaterName: entry.theaterName,
+      theaterArea: entry.theaterArea
     };
   });
 
@@ -176,6 +201,7 @@ app.get('/api/movies/:id', (req, res) => {
     language: movie.language,
     duration: movie.duration,
     certificate: movie.certificate,
+    rating: movie.rating,
     poster: movie.poster,
     showtimes
   });
@@ -188,6 +214,8 @@ app.get('/api/showtimes/:id/seats', (req, res) => {
   res.status(200).json({
     showtimeId: req.params.id,
     movieTitle: entry.movieTitle,
+    theaterName: entry.theaterName,
+    theaterArea: entry.theaterArea,
     time: entry.time,
     rows: ROW_LETTERS,
     cols: COLS,
@@ -227,6 +255,8 @@ app.post('/api/showtimes/:id/book', (req, res) => {
   res.status(200).json({
     bookingId: `BK${Date.now().toString(36).toUpperCase()}`,
     movieTitle: entry.movieTitle,
+    theaterName: entry.theaterName,
+    theaterArea: entry.theaterArea,
     time: entry.time,
     seats,
     total

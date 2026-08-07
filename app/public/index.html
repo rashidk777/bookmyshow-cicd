@@ -18,7 +18,13 @@
   <main>
     <p class="section-eyebrow">Now showing</p>
     <h1 class="section-title">Pick a film, pick a seat</h1>
+
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-chip is-active" data-genre="all">All</button>
+    </div>
+
     <div class="movie-grid" id="movie-grid"></div>
+    <p class="empty-state" id="empty-state" style="display:none;">No films match that filter — try another genre.</p>
   </main>
 
   <div class="overlay" id="overlay">
@@ -66,12 +72,17 @@
           <p class="confirm-panel__id" id="confirm-id"></p>
           <h2 class="confirm-panel__headline">You're in. Enjoy the show.</h2>
           <p class="sheet__meta" id="confirm-details"></p>
+          <div class="qr-wrap">
+            <div class="qr-code" id="qr-code"></div>
+            <p class="qr-caption">Show this at the counter</p>
+          </div>
           <button class="confirm-panel__btn" id="confirm-done">Book another show</button>
         </div>
       </div>
     </div>
   </div>
 
+  <script src="vendor/qrcode.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

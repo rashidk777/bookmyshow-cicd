@@ -38,6 +38,19 @@ describe('BookMyShow-Lite API', () => {
     expect(res.body).to.have.property('booked').that.is.an('array');
   });
 
+  it('GET /api/theaters should return the theater list', async () => {
+    const res = await chai.request(app).get('/api/theaters');
+    expect(res).to.have.status(200);
+    expect(res.body).to.be.an('array').that.is.not.empty;
+    expect(res.body[0]).to.have.property('name');
+  });
+
+  it('GET /api/movies/:id showtimes should include theater info', async () => {
+    const res = await chai.request(app).get('/api/movies/1');
+    expect(res).to.have.status(200);
+    expect(res.body.showtimes[0]).to.have.property('theaterName');
+  });
+
   it('POST /api/showtimes/:id/book should book available seats', async () => {
     const res = await chai.request(app)
       .post('/api/showtimes/1-1/book')
