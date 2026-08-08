@@ -11,7 +11,12 @@
   <header class="marquee-header">
     <div class="marquee-header__row">
       <div class="brand">Book<span>MyShow</span>-Lite</div>
-      <div class="marquee-ticker" id="ticker">Loading now-showing lineup…</div>
+      <div class="header-right">
+        <div class="marquee-ticker" id="ticker">Loading now-showing lineup…</div>
+        <div class="auth-area" id="auth-area">
+          <button class="btn-ghost" id="signin-btn">Sign In</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -79,6 +84,46 @@
           <button class="confirm-panel__btn" id="confirm-done">Book another show</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="auth-overlay">
+    <div class="sheet sheet--narrow" id="auth-sheet">
+      <button class="sheet__close" id="auth-close">&larr; Cancel</button>
+      <h2 class="sheet__title" id="auth-title">Sign In</h2>
+      <p class="sheet__meta" id="auth-subtitle">Sign in to book seats and see your tickets.</p>
+
+      <form id="auth-form" class="auth-form">
+        <label class="auth-field" id="auth-name-field" style="display:none;">
+          <span>Name</span>
+          <input type="text" id="auth-name" autocomplete="name" />
+        </label>
+        <label class="auth-field">
+          <span>Username</span>
+          <input type="text" id="auth-username" autocomplete="username" required />
+        </label>
+        <label class="auth-field">
+          <span>Password</span>
+          <input type="password" id="auth-password" autocomplete="current-password" required />
+        </label>
+        <p class="auth-error" id="auth-error"></p>
+        <button type="submit" class="btn-confirm auth-submit" id="auth-submit">Sign In</button>
+      </form>
+
+      <p class="auth-toggle">
+        <span id="auth-toggle-text">New here?</span>
+        <button class="auth-toggle-btn" id="auth-toggle-btn">Create an account</button>
+      </p>
+      <p class="auth-demo">Demo login — username <code>demo</code>, password <code>demo1234</code></p>
+    </div>
+  </div>
+
+  <div class="overlay" id="bookings-overlay">
+    <div class="sheet" id="bookings-sheet">
+      <button class="sheet__close" id="bookings-close">&larr; Back to listings</button>
+      <h2 class="sheet__title">My Bookings</h2>
+      <p class="sheet__meta" id="bookings-meta"></p>
+      <div id="bookings-list"></div>
     </div>
   </div>
 

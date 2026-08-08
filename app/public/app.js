@@ -21,12 +21,37 @@
   const confirmDone = document.getElementById('confirm-done');
   const qrCodeEl = document.getElementById('qr-code');
 
+  const authArea = document.getElementById('auth-area');
+  const signinBtn = document.getElementById('signin-btn');
+  const authOverlay = document.getElementById('auth-overlay');
+  const authClose = document.getElementById('auth-close');
+  const authForm = document.getElementById('auth-form');
+  const authTitle = document.getElementById('auth-title');
+  const authSubtitle = document.getElementById('auth-subtitle');
+  const authNameField = document.getElementById('auth-name-field');
+  const authName = document.getElementById('auth-name');
+  const authUsername = document.getElementById('auth-username');
+  const authPassword = document.getElementById('auth-password');
+  const authError = document.getElementById('auth-error');
+  const authSubmit = document.getElementById('auth-submit');
+  const authToggleText = document.getElementById('auth-toggle-text');
+  const authToggleBtn = document.getElementById('auth-toggle-btn');
+
+  const bookingsOverlay = document.getElementById('bookings-overlay');
+  const bookingsClose = document.getElementById('bookings-close');
+  const bookingsMeta = document.getElementById('bookings-meta');
+  const bookingsList = document.getElementById('bookings-list');
+
   let allMovies = [];
   let activeGenre = 'all';
   let currentMovie = null;
   let currentShowtime = null;
   let seatData = null;
   let selectedSeats = [];
+
+  let authMode = 'login'; // 'login' | 'signup'
+  let pendingBookingAfterAuth = false;
+  let currentUser = JSON.parse(localStorage.getItem('bms_user') || 'null'); // { token, username, name }
 
   // Decorative genre icons — original line-art, not depicting any real IP.
   const GENRE_ICONS = {
@@ -252,6 +277,12 @@
   }
 
   async function confirmBooking() {
+    if (!currentUser) {
+      pendingBookingAfterAuth = true;
+      openAuth('login', 'Sign in to complete your booking.');
+      return;
+    }
+
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Booking…';
     statusLine.textContent = '';
@@ -259,12 +290,22 @@
     try {
       const res = await fetch(`/api/showtimes/${currentShowtime}/book`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
         body: JSON.stringify({ seats: selectedSeats })
       });
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 401) {
+          pendingBookingAfterAuth = true;
+          openAuth('login', 'Your session expired — sign in again to finish booking.');
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm booking';
+          return;
+        }
         statusLine.textContent = data.error || 'Could not complete booking. Please try again.';
         confirmBtn.disabled = false;
         confirmBtn.textContent = 'Confirm booking';
@@ -310,5 +351,195 @@
     loadMovies();
   });
 
+  // ------------------------------------------------------------------ auth
+
+  function renderAuthArea() {
+    authArea.innerHTML = '';
+    if (currentUser) {
+      const chip = document.createElement('div');
+      chip.className = 'user-chip';
+      chip.innerHTML = `
+        <span class="user-chip__avatar">${currentUser.name.charAt(0).toUpperCase()}</span>
+        <span class="user-chip__name">${currentUser.name}</span>
+      `;
+      const bookingsBtn = document.createElement('button');
+      bookingsBtn.className = 'btn-ghost';
+      bookingsBtn.textContent = 'My Bookings';
+      bookingsBtn.addEventListener('click', openBookings);
+
+      const logoutBtn = document.createElement('button');
+      logoutBtn.className = 'btn-ghost';
+      logoutBtn.textContent = 'Log out';
+      logoutBtn.addEventListener('click', logout);
+
+      authArea.appendChild(chip);
+      authArea.appendChild(bookingsBtn);
+      authArea.appendChild(logoutBtn);
+    } else {
+      const btn = document.createElement('button');
+      btn.id = 'signin-btn';
+      btn.className = 'btn-ghost is-primary';
+      btn.textContent = 'Sign In';
+      btn.addEventListener('click', () => openAuth('login'));
+      authArea.appendChild(btn);
+    }
+  }
+
+  function openAuth(mode, subtitle) {
+    authMode = mode;
+    authError.textContent = '';
+    authForm.reset();
+    updateAuthMode(subtitle);
+    authOverlay.classList.add('is-open');
+    authUsername.focus();
+  }
+
+  function updateAuthMode(subtitleOverride) {
+    if (authMode === 'login') {
+      authTitle.textContent = 'Sign In';
+      authSubtitle.textContent = subtitleOverride || 'Sign in to book seats and see your tickets.';
+      authNameField.style.display = 'none';
+      authName.required = false;
+      authSubmit.textContent = 'Sign In';
+      authToggleText.textContent = 'New here?';
+      authToggleBtn.textContent = 'Create an account';
+    } else {
+      authTitle.textContent = 'Create Account';
+      authSubtitle.textContent = subtitleOverride || 'Sign up to start booking shows.';
+      authNameField.style.display = '';
+      authName.required = true;
+      authSubmit.textContent = 'Create Account';
+      authToggleText.textContent = 'Already have an account?';
+      authToggleBtn.textContent = 'Sign in';
+    }
+  }
+
+  function closeAuth() {
+    authOverlay.classList.remove('is-open');
+    pendingBookingAfterAuth = false;
+  }
+
+  authToggleBtn.addEventListener('click', () => {
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    authError.textContent = '';
+    updateAuthMode();
+  });
+
+  authClose.addEventListener('click', closeAuth);
+  authOverlay.addEventListener('click', (e) => {
+    if (e.target === authOverlay) closeAuth();
+  });
+
+  authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    authError.textContent = '';
+    authSubmit.disabled = true;
+    authSubmit.textContent = authMode === 'login' ? 'Signing in…' : 'Creating account…';
+
+    const payload = {
+      username: authUsername.value.trim(),
+      password: authPassword.value
+    };
+    if (authMode === 'signup') payload.name = authName.value.trim();
+
+    try {
+      const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        authError.textContent = data.error || 'Something went wrong. Please try again.';
+        authSubmit.disabled = false;
+        updateAuthMode();
+        return;
+      }
+
+      currentUser = { token: data.token, username: data.username, name: data.name };
+      localStorage.setItem('bms_user', JSON.stringify(currentUser));
+      renderAuthArea();
+
+      const shouldResumeBooking = pendingBookingAfterAuth;
+      closeAuth();
+
+      if (shouldResumeBooking) {
+        confirmBooking();
+      }
+    } catch (err) {
+      authError.textContent = 'Network error. Please try again.';
+    } finally {
+      authSubmit.disabled = false;
+      updateAuthMode();
+    }
+  });
+
+  async function logout() {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+      });
+    } catch (err) {
+      // ignore network errors on logout — clear local state regardless
+    }
+    currentUser = null;
+    localStorage.removeItem('bms_user');
+    renderAuthArea();
+  }
+
+  // -------------------------------------------------------------- bookings
+
+  async function openBookings() {
+    bookingsList.innerHTML = '<p class="bookings-empty">Loading your bookings…</p>';
+    bookingsMeta.textContent = `Signed in as ${currentUser.name}`;
+    bookingsOverlay.classList.add('is-open');
+
+    try {
+      const res = await fetch('/api/bookings', {
+        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+      });
+      if (res.status === 401) {
+        bookingsOverlay.classList.remove('is-open');
+        logout();
+        openAuth('login', 'Your session expired — sign in again.');
+        return;
+      }
+      const data = await res.json();
+      renderBookingsList(data);
+    } catch (err) {
+      bookingsList.innerHTML = '<p class="bookings-empty">Could not load your bookings. Please try again.</p>';
+    }
+  }
+
+  function renderBookingsList(items) {
+    if (!items.length) {
+      bookingsList.innerHTML = '<p class="bookings-empty">No bookings yet — go pick a show!</p>';
+      return;
+    }
+    bookingsList.innerHTML = '';
+    items.forEach((b) => {
+      const card = document.createElement('div');
+      card.className = 'booking-card';
+      card.innerHTML = `
+        <div>
+          <div class="booking-card__title">${b.movieTitle}</div>
+          <div class="booking-card__meta">${b.theaterName}, ${b.theaterArea} · ${b.time} · Seats ${b.seats.sort().join(', ')}</div>
+          <div class="booking-card__id">${b.bookingId}</div>
+        </div>
+        <div class="booking-card__total">&#8377;${money(b.total)}</div>
+      `;
+      bookingsList.appendChild(card);
+    });
+  }
+
+  bookingsClose.addEventListener('click', () => bookingsOverlay.classList.remove('is-open'));
+  bookingsOverlay.addEventListener('click', (e) => {
+    if (e.target === bookingsOverlay) bookingsOverlay.classList.remove('is-open');
+  });
+
+  renderAuthArea();
   loadMovies();
 })();
